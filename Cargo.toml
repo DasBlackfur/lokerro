@@ -2,5 +2,8 @@
 name = "lokerro"
 version = "0.1.0"
 edition = "2021"
+description = "A simple error handling library for libraries and applications alike"
+license = "MIT"
+repository = "https://github.com/DasBlackfur/lokerro"
 
 [dependencies]
