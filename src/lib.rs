@@ -1,19 +1,78 @@
 #![no_std]
+//! Lokerro aims to provide simple error handling, comparable to `anyhow`.
+//!
+//! It however has a few advantages:
+//! - Relatively inexpensive location information compared to full backtraces
+//! - Compatibility with bad error types (those who do not implement Error)
+//! - Compatibility with complex error types (those who have hundres of lifetimes in their type specification)
+//!
+//! It also comes with a disadvantage you should consider if you are making a library:
+//! - The error type cannot be used in other error handling code, meaning you will be locked into using lokerro for all downstream handling
+//!
+//! Here is an example how lokerro might be used in an application:
+//! ```rust,should_panic
+//! use std::{collections::HashMap, fs::File, io::Read};
+//! use lokerro::{ErrorExt, Result};
+//!
+//! fn main() -> Result<()> {
+//!     let result = load_settings().loc_msg("Loading settings failed")?;
+//!
+//!     println!("{result:?}");
+//!
+//!     Ok(())
+//! }
+//!
+//! fn load_settings() -> Result<HashMap<u32, String>> {
+//!     let mut config = HashMap::new();
+//!     let config_1 = process_file("this_file_may_not_exist.txt").loc()?;
+//!     let config_2 = process_file("this_file_neither.txt").loc()?;
+//!
+//!     config.insert(1, config_1);
+//!     config.insert(2, config_2);
+//!
+//!     Ok(config)
+//! }
+//!
+//! fn process_file(path: &str) -> Result<String> {
+//!     let mut file = File::open(path)?;
+//!     let mut string = String::new();
+//!
+//!     file.read_to_string(&mut string)?;
+//!     Ok(string)
+//! }
+//! ```
+//!
+//! This example will exit with code 1 and print out the following:
+//! ```text
+//! Error: Loading settings failed in examples\realistic.rs:5:34
+//! Caused by: lokerro::Error in examples\realistic.rs:14:64
+//! Caused by: std::io::error::Error in examples\realistic.rs:24:20
+//! ```
 extern crate alloc;
 
 use alloc::boxed::Box;
 use core::{
     any::type_name,
     error::Error as ErrorTrait,
-    fmt::{Debug, Display},
+    fmt::{Debug, Display}, ops::Deref,
 };
 
 pub type Result<T> = core::result::Result<T, Error>;
 
-pub struct Error {
+pub struct Error(Box<ErrorImpl>);
+
+impl Deref for Error {
+    type Target = ErrorImpl;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+pub struct ErrorImpl {
     name: &'static str,
     location: Location,
-    cause: Option<Box<Error>>,
+    cause: Option<Error>,
 }
 
 pub struct Location {
@@ -57,11 +116,10 @@ impl Debug for Error {
 impl<E: ErrorTrait> From<E> for Error {
     #[track_caller]
     fn from(error: E) -> Self {
-        //println!("Fetching location in From ErrorTrait");
         Self::new(
             type_name::<E>(),
             core::panic::Location::caller(),
-            error.source().map(|inner| Box::new(Error::from(inner))),
+            error.source().map(Error::from),
         )
     }
 }
@@ -70,13 +128,13 @@ impl Error {
     pub fn new(
         name: &'static str,
         location: &'static core::panic::Location,
-        cause: Option<Box<Error>>,
+        cause: Option<Error>,
     ) -> Self {
-        Self {
+        Error(Box::new(ErrorImpl {
             name,
             location: Location::new(location),
             cause,
-        }
+        }))
     }
 }
 
@@ -86,7 +144,6 @@ pub trait ErrorExt<T> {
 }
 
 pub trait ErrorExtTrait<T> {
-    fn loc(self) -> Result<T>;
     fn loc_msg(self, msg: &'static str) -> Result<T>;
 }
 
@@ -129,7 +186,7 @@ impl<T> ErrorExt<T> for Result<T> {
             Err(err) => Err(Error::new(
                 type_name::<Error>(),
                 core::panic::Location::caller(),
-                Some(Box::new(err)),
+                Some(err),
             )),
         }
     }
@@ -141,7 +198,7 @@ impl<T> ErrorExt<T> for Result<T> {
             Err(err) => Err(Error::new(
                 msg,
                 core::panic::Location::caller(),
-                Some(Box::new(err)),
+                Some(err),
             )),
         }
     }
@@ -152,27 +209,13 @@ where
     E: ErrorTrait,
 {
     #[track_caller]
-    fn loc(self) -> Result<T> {
-        //println!("Fetching location in ErrorExtTrait");
-        match self {
-            Ok(ok) => Ok(ok),
-            Err(err) => Err(Error::new(
-                type_name::<E>(),
-                core::panic::Location::caller(),
-                Some(Box::new(Error::from(err))),
-            )),
-        }
-    }
-
-    #[track_caller]
     fn loc_msg(self, msg: &'static str) -> Result<T> {
-        //println!("Fetching location in ErrorExtTrait");
         match self {
             Ok(ok) => Ok(ok),
             Err(err) => Err(Error::new(
                 msg,
                 core::panic::Location::caller(),
-                Some(Box::new(Error::from(err))),
+                Some(Error::from(err)),
             )),
         }
     }
@@ -181,7 +224,6 @@ where
 impl<T, E> ErrorExtCompat<T> for core::result::Result<T, E> {
     #[track_caller]
     fn loc_compat(self) -> Result<T> {
-        //println!("Fetching location in ErrorExtCompat");
         match self {
             Ok(ok) => Ok(ok),
             Err(_) => Err(Error::new(
@@ -194,7 +236,6 @@ impl<T, E> ErrorExtCompat<T> for core::result::Result<T, E> {
 
     #[track_caller]
     fn loc_compat_msg(self, msg: &'static str) -> Result<T> {
-        //println!("Fetching location in ErrorExtCompat");
         match self {
             Ok(ok) => Ok(ok),
             Err(_) => Err(Error::new(

@@ -1,6 +1,6 @@
 use std::fs::File;
 
-use lokerro::{ErrorExt as _, ErrorExtCompat as _, ErrorExtTrait, Result as LokerroResult};
+use lokerro::{ErrorExt as _, ErrorExtCompat as _, ErrorExtTrait as _, Result as LokerroResult};
 
 #[test]
 #[cfg_attr(
@@ -31,11 +31,11 @@ fn unwrap_chained_bad_error_msg() {
 #[test]
 #[cfg_attr(
     target_family = "windows",
-    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests\\try.rs:41:19\nCaused by: std::io::error::Error in tests\\try.rs:95:19\nCaused by: std::io::error::Error in tests\\try.rs:95:19\n"
+    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests\\try.rs:41:19\nCaused by: std::io::error::Error in tests\\try.rs:95:5\n"
 )]
 #[cfg_attr(
     target_family = "unix",
-    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests/try.rs:41:19\nCaused by: std::io::error::Error in tests/try.rs:95:19\nCaused by: std::io::error::Error in tests/try.rs:95:19\n"
+    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests/try.rs:41:19\nCaused by: std::io::error::Error in tests/try.rs:95:5\n"
 )]
 fn unwrap_chained_error() {
     chain_error().loc().unwrap()
@@ -57,11 +57,11 @@ fn unwrap_chained_error_msg() {
 #[test]
 #[cfg_attr(
     target_family = "windows",
-    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests\\try.rs:67:27\nCaused by: lokerro::Error in tests\\try.rs:85:19\nCaused by: std::io::error::Error in tests\\try.rs:95:19\nCaused by: std::io::error::Error in tests\\try.rs:95:19\n"
+    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests\\try.rs:67:27\nCaused by: lokerro::Error in tests\\try.rs:85:19\nCaused by: std::io::error::Error in tests\\try.rs:95:5\n"
 )]
 #[cfg_attr(
     target_family = "unix",
-    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests/try.rs:67:27\nCaused by: lokerro::Error in tests/try.rs:85:19\nCaused by: std::io::error::Error in tests/try.rs:95:19\nCaused by: std::io::error::Error in tests/try.rs:95:19\n"
+    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests/try.rs:67:27\nCaused by: lokerro::Error in tests/try.rs:85:19\nCaused by: std::io::error::Error in tests/try.rs:95:5\n"
 )]
 fn unwrap_chained_lokerro_error() {
     chain_lokerro_error().loc().unwrap()
@@ -70,11 +70,11 @@ fn unwrap_chained_lokerro_error() {
 #[test]
 #[cfg_attr(
     target_family = "windows",
-    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests\\try.rs:80:31\nCaused by: This is a lokerro error in tests\\try.rs:90:19\nCaused by: std::io::error::Error in tests\\try.rs:95:19\nCaused by: std::io::error::Error in tests\\try.rs:95:19\n"
+    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests\\try.rs:80:31\nCaused by: This is a lokerro error in tests\\try.rs:90:19\nCaused by: std::io::error::Error in tests\\try.rs:95:5\n"
 )]
 #[cfg_attr(
     target_family = "unix",
-    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests/try.rs:80:31\nCaused by: This is a lokerro error in tests/try.rs:90:19\nCaused by: std::io::error::Error in tests/try.rs:95:19\nCaused by: std::io::error::Error in tests/try.rs:95:19\n"
+    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests/try.rs:80:31\nCaused by: This is a lokerro error in tests/try.rs:90:19\nCaused by: std::io::error::Error in tests/try.rs:95:5\n"
 )]
 fn unwrap_chained_lokerro_error_msg() {
     chain_lokerro_error_msg().loc().unwrap()
@@ -92,7 +92,7 @@ fn chain_lokerro_error_msg() -> LokerroResult<()> {
 }
 
 fn chain_error() -> LokerroResult<()>{
-    cause_error().loc()?;
+    cause_error()?;
     Ok(())
 }
 
