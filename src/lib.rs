@@ -48,6 +48,9 @@
 //! Caused by: lokerro::Error in examples\realistic.rs:14:64
 //! Caused by: std::io::error::Error in examples\realistic.rs:24:20
 //! ```
+
+mod actix_web;
+
 extern crate alloc;
 
 use alloc::boxed::Box;
@@ -144,6 +147,7 @@ pub trait ErrorExt<T> {
 }
 
 pub trait ErrorExtTrait<T> {
+    fn loc(self) -> Result<T>;
     fn loc_msg(self, msg: &'static str) -> Result<T>;
 }
 
@@ -208,6 +212,18 @@ impl<T, E> ErrorExtTrait<T> for core::result::Result<T, E>
 where
     E: ErrorTrait,
 {
+    #[track_caller]
+    fn loc(self) -> Result<T> {
+        match self {
+            Ok(ok) => Ok(ok),
+            Err(err) => Err(Error::new(
+                type_name::<E>(),
+                core::panic::Location::caller(),
+                Some(Error::from(err)),
+            )),
+        }
+    }
+
     #[track_caller]
     fn loc_msg(self, msg: &'static str) -> Result<T> {
         match self {
