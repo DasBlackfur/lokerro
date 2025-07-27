@@ -18,11 +18,11 @@ fn unwrap_chained_bad_error() {
 #[test]
 #[cfg_attr(
     target_family = "windows",
-    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests\\try.rs:28:27\nCaused by: This is a bad error in tests\\try.rs:110:23\n"
+    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests\\try.rs:28:27\nCaused by: try::BadError -> `This is a bad error` in tests\\try.rs:110:23\n"
 )]
 #[cfg_attr(
     target_family = "unix",
-    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests/try.rs:28:27\nCaused by: This is a bad error in tests/try.rs:110:23\n"
+    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests/try.rs:28:27\nCaused by: try::BadError -> `This is a bad error` in tests/try.rs:110:23\n"
 )]
 fn unwrap_chained_bad_error_msg() {
     chain_bad_error_msg().loc().unwrap()
@@ -31,11 +31,11 @@ fn unwrap_chained_bad_error_msg() {
 #[test]
 #[cfg_attr(
     target_family = "windows",
-    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests\\try.rs:41:19\nCaused by: std::io::error::Error in tests\\try.rs:95:5\n"
+    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests\\try.rs:41:19\nCaused by: std::io::error::Error -> `Os { code: 2, kind: NotFound, message: \"No such file or directory\" }` in tests\\try.rs:95:5\n"
 )]
 #[cfg_attr(
     target_family = "unix",
-    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests/try.rs:41:19\nCaused by: std::io::error::Error in tests/try.rs:95:5\n"
+    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests/try.rs:41:19\nCaused by: std::io::error::Error -> `Os { code: 2, kind: NotFound, message: \"No such file or directory\" }` in tests/try.rs:95:5\n"
 )]
 fn unwrap_chained_error() {
     chain_error().loc().unwrap()
@@ -44,11 +44,11 @@ fn unwrap_chained_error() {
 #[test]
 #[cfg_attr(
     target_family = "windows",
-    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests\\try.rs:54:23\nCaused by: This is a good error in tests\\try.rs:100:19\nCaused by: std::io::error::Error in tests\\try.rs:100:19\n"
+    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests\\try.rs:54:23\nCaused by: std::io::error::Error -> `This is a good error` in tests\\try.rs:100:19\nCaused by: std::io::error::Error -> `Os { code: 2, kind: NotFound, message: \"No such file or directory\" }` in tests\\try.rs:100:19\n"
 )]
 #[cfg_attr(
     target_family = "unix",
-    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests/try.rs:54:23\nCaused by: This is a good error in tests/try.rs:100:19\nCaused by: std::io::error::Error in tests/try.rs:100:19\n"
+    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests/try.rs:54:23\nCaused by: std::io::error::Error -> `This is a good error` in tests/try.rs:100:19\nCaused by: std::io::error::Error -> `Os { code: 2, kind: NotFound, message: \"No such file or directory\" }` in tests/try.rs:100:19\n"
 )]
 fn unwrap_chained_error_msg() {
     chain_error_msg().loc().unwrap()
@@ -57,11 +57,11 @@ fn unwrap_chained_error_msg() {
 #[test]
 #[cfg_attr(
     target_family = "windows",
-    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests\\try.rs:67:27\nCaused by: lokerro::Error in tests\\try.rs:85:19\nCaused by: std::io::error::Error in tests\\try.rs:95:5\n"
+    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests\\try.rs:67:27\nCaused by: lokerro::Error in tests\\try.rs:85:19\nCaused by: std::io::error::Error -> `Os { code: 2, kind: NotFound, message: \"No such file or directory\" }` in tests\\try.rs:95:5\n"
 )]
 #[cfg_attr(
     target_family = "unix",
-    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests/try.rs:67:27\nCaused by: lokerro::Error in tests/try.rs:85:19\nCaused by: std::io::error::Error in tests/try.rs:95:5\n"
+    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests/try.rs:67:27\nCaused by: lokerro::Error in tests/try.rs:85:19\nCaused by: std::io::error::Error -> `Os { code: 2, kind: NotFound, message: \"No such file or directory\" }` in tests/try.rs:95:5\n"
 )]
 fn unwrap_chained_lokerro_error() {
     chain_lokerro_error().loc().unwrap()
@@ -70,11 +70,11 @@ fn unwrap_chained_lokerro_error() {
 #[test]
 #[cfg_attr(
     target_family = "windows",
-    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests\\try.rs:80:31\nCaused by: This is a lokerro error in tests\\try.rs:90:19\nCaused by: std::io::error::Error in tests\\try.rs:95:5\n"
+    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests\\try.rs:80:31\nCaused by: lokerro::Error -> `This is a lokerro error` in tests\\try.rs:90:19\nCaused by: std::io::error::Error -> `Os { code: 2, kind: NotFound, message: \"No such file or directory\" }` in tests\\try.rs:95:5\n"
 )]
 #[cfg_attr(
     target_family = "unix",
-    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests/try.rs:80:31\nCaused by: This is a lokerro error in tests/try.rs:90:19\nCaused by: std::io::error::Error in tests/try.rs:95:5\n"
+    should_panic = "called `Result::unwrap()` on an `Err` value: lokerro::Error in tests/try.rs:80:31\nCaused by: lokerro::Error -> `This is a lokerro error` in tests/try.rs:90:19\nCaused by: std::io::error::Error -> `Os { code: 2, kind: NotFound, message: \"No such file or directory\" }` in tests/try.rs:95:5\n"
 )]
 fn unwrap_chained_lokerro_error_msg() {
     chain_lokerro_error_msg().loc().unwrap()

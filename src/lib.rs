@@ -53,7 +53,10 @@ mod actix_web;
 
 extern crate alloc;
 
+use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
+use alloc::format;
+use alloc::string::{String};
 use core::{
     any::type_name,
     error::Error as ErrorTrait,
@@ -74,6 +77,7 @@ impl Deref for Error {
 
 pub struct ErrorImpl {
     name: &'static str,
+    message: Option<String>,
     location: Location,
     cause: Option<Error>,
 }
@@ -108,7 +112,10 @@ impl Display for Error {
 
 impl Debug for Error {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        writeln!(f, "{} in {:?}", self.name, self.location)?;
+        match &self.message {
+            None => writeln!(f, "{} in {:?}", self.name, self.location)?,
+            Some(msg) => writeln!(f, "{} -> `{}` in {:?}", self.name, msg, self.location)?,
+        }
         if let Some(cause) = &self.cause {
             write!(f, "Caused by: {cause}")?;
         }
@@ -121,6 +128,7 @@ impl<E: ErrorTrait> From<E> for Error {
     fn from(error: E) -> Self {
         Self::new(
             type_name::<E>(),
+            Some(format!("{error:?}")),
             core::panic::Location::caller(),
             error.source().map(Error::from),
         )
@@ -130,11 +138,13 @@ impl<E: ErrorTrait> From<E> for Error {
 impl Error {
     pub fn new(
         name: &'static str,
+        msg: Option<String>,
         location: &'static core::panic::Location,
         cause: Option<Error>,
     ) -> Self {
         Error(Box::new(ErrorImpl {
             name,
+            message: msg,
             location: Location::new(location),
             cause,
         }))
@@ -143,17 +153,17 @@ impl Error {
 
 pub trait ErrorExt<T> {
     fn loc(self) -> Result<T>;
-    fn loc_msg(self, msg: &'static str) -> Result<T>;
+    fn loc_msg(self, msg: &str) -> Result<T>;
 }
 
 pub trait ErrorExtTrait<T> {
     fn loc(self) -> Result<T>;
-    fn loc_msg(self, msg: &'static str) -> Result<T>;
+    fn loc_msg(self, msg: &str) -> Result<T>;
 }
 
 pub trait ErrorExtCompat<T> {
     fn loc_compat(self) -> Result<T>;
-    fn loc_compat_msg(self, msg: &'static str) -> Result<T>;
+    fn loc_compat_msg(self, msg: &str) -> Result<T>;
 }
 
 impl<T> ErrorExt<T> for Option<T> {
@@ -163,6 +173,7 @@ impl<T> ErrorExt<T> for Option<T> {
             Some(t) => Ok(t),
             None => Err(Error::new(
                 type_name::<Option<T>>(),
+                None,
                 core::panic::Location::caller(),
                 None,
             )),
@@ -170,11 +181,12 @@ impl<T> ErrorExt<T> for Option<T> {
     }
 
     #[track_caller]
-    fn loc_msg(self, msg: &'static str) -> Result<T> {
+    fn loc_msg(self, msg: &str) -> Result<T> {
         match self {
             Some(t) => Ok(t),
             None => Err(Error::new(
-                msg,
+                type_name::<Option<T>>(),
+                Some(msg.to_owned()),
                 core::panic::Location::caller(),
                 None,
             )),
@@ -189,6 +201,7 @@ impl<T> ErrorExt<T> for Result<T> {
             Ok(ok) => Ok(ok),
             Err(err) => Err(Error::new(
                 type_name::<Error>(),
+                None,
                 core::panic::Location::caller(),
                 Some(err),
             )),
@@ -196,11 +209,12 @@ impl<T> ErrorExt<T> for Result<T> {
     }
 
     #[track_caller]
-    fn loc_msg(self, msg: &'static str) -> Result<T> {
+    fn loc_msg(self, msg: &str) -> Result<T> {
         match self {
             Ok(ok) => Ok(ok),
             Err(err) => Err(Error::new(
-                msg,
+                type_name::<Error>(),
+                Some(msg.to_owned()),
                 core::panic::Location::caller(),
                 Some(err),
             )),
@@ -218,6 +232,7 @@ where
             Ok(ok) => Ok(ok),
             Err(err) => Err(Error::new(
                 type_name::<E>(),
+                None,
                 core::panic::Location::caller(),
                 Some(Error::from(err)),
             )),
@@ -225,11 +240,12 @@ where
     }
 
     #[track_caller]
-    fn loc_msg(self, msg: &'static str) -> Result<T> {
+    fn loc_msg(self, msg: &str) -> Result<T> {
         match self {
             Ok(ok) => Ok(ok),
             Err(err) => Err(Error::new(
-                msg,
+                type_name::<E>(),
+                Some(msg.to_owned()),
                 core::panic::Location::caller(),
                 Some(Error::from(err)),
             )),
@@ -244,6 +260,7 @@ impl<T, E> ErrorExtCompat<T> for core::result::Result<T, E> {
             Ok(ok) => Ok(ok),
             Err(_) => Err(Error::new(
                 type_name::<E>(),
+                None,
                 core::panic::Location::caller(),
                 None,
             )),
@@ -251,11 +268,12 @@ impl<T, E> ErrorExtCompat<T> for core::result::Result<T, E> {
     }
 
     #[track_caller]
-    fn loc_compat_msg(self, msg: &'static str) -> Result<T> {
+    fn loc_compat_msg(self, msg: &str) -> Result<T> {
         match self {
             Ok(ok) => Ok(ok),
             Err(_) => Err(Error::new(
-                msg,
+                type_name::<E>(),
+                Some(msg.to_owned()),
                 core::panic::Location::caller(),
                 None,
             )),
